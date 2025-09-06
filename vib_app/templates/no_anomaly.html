@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>No Anomaly Detected</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #2c3e50; }
+        .container { max-width: 600px; margin: auto; }
+        .box { background: #ecf0f1; padding: 20px; border-radius: 8px; }
+        .btn { display: inline-block; padding: 10px 15px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }
+        .btn:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>No Anomaly Detected</h1>
+        <div class="box">
+            <h2>Vibration Data Analysis Results</h2>
+            <p><strong>Anomaly Status:</strong> Not Detected</p>
+            <p><strong>Anomaly Ratio:</strong> {{ results.anomaly_ratio * 100 }}%</p>
+            <p><strong>Anomaly Score:</strong> {{ results.avg_anomaly_score }}</p>
+            <p>The system is operating normally. No fault diagnosis is needed.</p>
+            <a class="btn" href="{{ url_for('download_report', analysis_id=analysis_id) }}">Download Anomaly Report</a>
+        </div>
+    </div>
+</body>
+</html>

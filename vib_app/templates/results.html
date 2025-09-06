@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - Vibration Analysis System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        body {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            background-color: #f8f9fa;
+        }
+        .header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .result-card {
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s;
+        }
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+        .status-normal {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-fault {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .image-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 1rem 0;
+        }
+        .image-item {
+            display: inline-block;
+            margin-right: 1rem;
+            vertical-align: top;
+        }
+        .image-item img {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            max-height: 250px;
+        }
+        .image-item p {
+            margin-top: 0.5rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .report-btn {
+            margin-top: 2rem;
+        }
+        .tab-content {
+            padding: 1.5rem;
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 0.25rem 0.25rem;
+        }
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>Analysis Results</h1>
+                <a href="/" class="btn btn-outline-secondary">New Analysis</a>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header {{ 'status-normal' if not results.is_faulty else 'status-fault' }}">
+                        <h4 class="mb-0">
+                            {% if results.is_faulty %}
+                                Fault Detected: {{ results.fault_class }}
+                            {% else %}
+                                No Fault Detected - Normal Operation
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Classification Results</h5>
+                                <table class="table table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <th>Machine Status:</th>
+                                            <td>{{ 'Normal' if not results.is_faulty else 'Faulty' }}</td>
+                                        </tr>
+                                        {% if results.is_faulty %}
+                                        <tr>
+                                            <th>Fault Type:</th>
+                                            <td>{{ results.fault_class }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Fault Severity:</th>
+                                            <td>{{ results.severity }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Fault Area:</th>
+                                            <td>{{ results.area }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Recommendation</h5>
+                                <div class="alert {{ 'alert-success' if not results.is_faulty else 'alert-danger' }}">
+                                    {% if not results.is_faulty %}
+                                        <p><strong>Machine is operating normally.</strong> No maintenance action required at this time.</p>
+                                        <p>Continue regular monitoring and scheduled maintenance.</p>
+                                    {% else %}
+                                        <p><strong>Maintenance Required:</strong></p>
+                                        {% if 'Cage' in results.fault_class %}
+                                            <p>Inspect the bearing cage for wear, deformation, or damage in the {{ results.area }} location. Consider replacement if damage is confirmed.</p>
+                                        {% elif 'Ball' in results.fault_class %}
+                                            <p>Replace the bearing. Ball faults in the {{ results.area }} location indicate the bearing has reached the end of its service life.</p>
+                                        {% elif 'Outer Race' in results.fault_class %}
+                                            <p>Replace the bearing. Outer race faults in the {{ results.area }} location indicate significant wear that cannot be repaired.</p>
+                                        {% else %}
+                                            <p>Inspect the {{ results.area }} bearing for signs of damage or abnormal wear. Consider replacement if necessary.</p>
+                                        {% endif %}
+                                        <p>Severity: {{ results.severity }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="time-tab" data-bs-toggle="tab" data-bs-target="#time" type="button" role="tab" aria-controls="time" aria-selected="true">Time Domain</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="frequency-tab" data-bs-toggle="tab" data-bs-target="#frequency" type="button" role="tab" aria-controls="frequency" aria-selected="false">Frequency Domain</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="myTabContent">
+                            <div class="tab-pane fade show active" id="time" role="tabpanel" aria-labelledby="time-tab">
+                                <h5>Time Domain Analysis</h5>
+                                <p>Time domain signals show the raw vibration amplitude over time:</p>
+                                <div class="image-container">
+                                    {% for img in time_images %}
+                                    <div class="image-item">
+                                        <img src="data:image/png;base64,{{ img.img }}" alt="{{ img.name }}">
+                                        <p>{{ img.name }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="frequency" role="tabpanel" aria-labelledby="frequency-tab">
+                                <h5>Frequency Domain Analysis</h5>
+                                <p>Frequency domain signals show the amplitude of different frequency components:</p>
+                                <div class="image-container">
+                                    {% for img in freq_images %}
+                                    <div class="image-item">
+                                        <img src="data:image/png;base64,{{ img.img }}" alt="{{ img.name }}">
+                                        <p>{{ img.name }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center">
+                <div class="report-btn">
+                    <a href="/download_report/{{ analysis_id }}" class="btn btn-primary btn-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-pdf me-2" viewBox="0 0 16 16">
+                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                            <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029zm1.379-1.901c-.166.076-.32.156-.459.238-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361.01.022.02.036.026.044a.266.266 0 0 0 .035-.012c.137-.056.355-.235.635-.572a8.18 8.18 0 0 0 .45-.606zm1.64-1.33a12.71 12.71 0 0 1 1.01-.193 11.744 11.744 0 0 1-.51-.858 20.801 20.801 0 0 1-.5 1.05zm2.446.45c.15.163.296.3.435.41.24.19.407.253.498.256a.107.107 0 0 0 .07-.015.307.307 0 0 0 .094-.125.436.436 0 0 0 .059-.2.095.095 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a3.876 3.876 0 0 0-.612-.053zM8.078 7.8a6.7 6.7 0 0 0 .2-.828c.031-.188.043-.343.038-.465a.613.613 0 0 0-.032-.198.517.517 0 0 0-.145.04c-.087.035-.158.106-.196.283-.04.192-.03.469.046.822.024.111.054.227.09.346z"/>
+                        </svg>
+                        Download Full Report (PDF)
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Vibration Analysis System &copy; 2025</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
